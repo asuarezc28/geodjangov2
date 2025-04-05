@@ -9,5 +9,6 @@ router.register(r'events', views.EventViewSet)
 router.register(r'itineraries', views.ItineraryViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('', views.health_check, name='health_check'),
+    path('api/', include(router.urls)),
 ] 

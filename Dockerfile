@@ -26,11 +26,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el resto del código
 COPY . .
 
-# Recolectar archivos estáticos
-RUN python manage.py collectstatic --noinput
+# Crear script de inicio
+RUN echo "#!/bin/bash\npython manage.py migrate\npython manage.py collectstatic --noinput\ngunicorn palma_tourism.wsgi:application --bind 0.0.0.0:\$PORT" > start.sh
+RUN chmod +x start.sh
 
-# Exponer el puerto
+# Exponer el puerto (Railway lo sobreescribirá con $PORT)
 EXPOSE 8000
 
 # Comando para ejecutar la aplicación
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "palma_tourism.wsgi"] 
+CMD ["./start.sh"] 

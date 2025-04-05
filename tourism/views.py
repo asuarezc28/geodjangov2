@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
@@ -334,3 +334,7 @@ class ItineraryViewSet(viewsets.ModelViewSet):
             )
         except Exception as e:
             return Response({"error": str(e)}, status=400)
+
+@api_view(['GET'])
+def health_check(request):
+    return Response({"status": "ok"})
