@@ -7,4 +7,9 @@ __pycache__
 venv/
 media/
 staticfiles/
-*.sqlite3 
+*.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/
+docker-compose.yml
+README.md 
