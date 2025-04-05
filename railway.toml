@@ -1,0 +1,14 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "gunicorn palma_tourism.wsgi:application --bind 0.0.0.0:$PORT"
+healthcheckPath = "/api/itineraries/"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[deploy.envs]
+DJANGO_DEBUG = "False"
+RAILWAY_ENVIRONMENT = "True" 
