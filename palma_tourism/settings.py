@@ -21,10 +21,15 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Configuración de GDAL
-GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
-GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
-if os.getenv('PROJ_LIB'):
-    os.environ['PROJ_LIB'] = os.getenv('PROJ_LIB')
+if os.getenv('RAILWAY_ENVIRONMENT'):
+    GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
+    GEOS_LIBRARY_PATH = '/usr/lib/libgeos_c.so'
+else:
+    # Configuración local
+    GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
+    GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
+    if os.getenv('PROJ_LIB'):
+        os.environ['PROJ_LIB'] = os.getenv('PROJ_LIB')
 
 
 # Quick-start development settings - unsuitable for production
