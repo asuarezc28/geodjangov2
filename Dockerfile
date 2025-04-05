@@ -27,7 +27,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Crear script de inicio
-RUN echo "#!/bin/bash\npython manage.py migrate\npython manage.py collectstatic --noinput\ngunicorn palma_tourism.wsgi:application --bind 0.0.0.0:\$PORT" > start.sh
+RUN echo '#!/bin/bash\n\
+echo "Waiting for database..."\n\
+sleep 10\n\
+echo "Running migrations..."\n\
+python manage.py migrate\n\
+echo "Collecting static files..."\n\
+python manage.py collectstatic --noinput\n\
+echo "Starting Gunicorn..."\n\
+gunicorn palma_tourism.wsgi:application --bind 0.0.0.0:$PORT --log-level debug --timeout 120' > start.sh
+
 RUN chmod +x start.sh
 
 # Exponer el puerto (Railway lo sobreescribirá con $PORT)
