@@ -11,22 +11,41 @@ import sys
 import time
 import psycopg2
 import os
+from urllib.parse import urlparse
 
 database_url = os.getenv('DATABASE_URL')
 if not database_url:
     print("No DATABASE_URL found")
     sys.exit(1)
 
+print(f"Attempting to connect to database...")
+url = urlparse(database_url)
+print(f"Host: {url.hostname}")
+print(f"Port: {url.port}")
+print(f"Database: {url.path[1:]}")
+
 # Wait for database to be ready
-for _ in range(30):
+max_retries = 30
+retry_count = 0
+while retry_count < max_retries:
     try:
-        conn = psycopg2.connect(database_url)
+        print(f"Connection attempt {retry_count + 1}/{max_retries}")
+        conn = psycopg2.connect(
+            database_url,
+            connect_timeout=5
+        )
         conn.close()
-        print("Database is ready!")
+        print("Database connection successful!")
         break
     except psycopg2.OperationalError as e:
-        print(f"Waiting for database... ({e})")
-        time.sleep(1)
+        print(f"Database connection failed: {e}")
+        retry_count += 1
+        if retry_count < max_retries:
+            print("Retrying in 1 second...")
+            time.sleep(1)
+        else:
+            print("Max retries reached. Exiting.")
+            sys.exit(1)
 END
 
 echo "Running migrations..."
@@ -41,4 +60,5 @@ exec gunicorn palma_tourism.wsgi:application \
     --workers 1 \
     --timeout 120 \
     --access-logfile - \
-    --error-logfile - 
+    --error-logfile - \
+    --log-level debug 

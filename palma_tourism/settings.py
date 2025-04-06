@@ -111,15 +111,10 @@ DATABASES = {
         default='postgis://postgres:postgres@localhost:5432/palma_tourism',
         engine='django.contrib.gis.db.backends.postgis',
         conn_max_age=600,
+        ssl_require=True if os.getenv('RAILWAY_ENVIRONMENT') else False,
+        conn_health_checks=True if os.getenv('RAILWAY_ENVIRONMENT') else False,
     )
 }
-
-if os.getenv('RAILWAY_ENVIRONMENT'):
-    DATABASES['default'] = dj_database_url.config(
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True,
-    )
 
 
 # Password validation
