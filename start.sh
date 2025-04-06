@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# Esperar a que PostgreSQL esté disponible
+# Dar tiempo a que PostgreSQL esté disponible
 echo "Waiting for PostgreSQL..."
-until pg_isready -h "$DATABASE_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USER" -d "$DATABASE_NAME"; do
-    echo "PostgreSQL is unavailable - sleeping"
-    sleep 1
-done
-echo "PostgreSQL is ready!"
+sleep 10
+echo "Continuing with deployment..."
 
 # Aplicar migraciones
 echo "Applying migrations..."
