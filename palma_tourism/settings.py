@@ -22,8 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Configuración de GDAL
 if os.getenv('RAILWAY_ENVIRONMENT'):
-    GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
-    GEOS_LIBRARY_PATH = '/usr/lib/libgeos_c.so'
+    GDAL_LIBRARY_PATH = '/usr/lib/x86_64-linux-gnu/libgdal.so'
+    GEOS_LIBRARY_PATH = '/usr/lib/x86_64-linux-gnu/libgeos_c.so'
+    
+    # Configuración adicional para GeoDjango en producción
+    os.environ['GDAL_DATA'] = '/usr/share/gdal'
+    os.environ['PROJ_LIB'] = '/usr/share/proj'
 else:
     # Configuración local
     GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')

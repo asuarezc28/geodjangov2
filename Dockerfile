@@ -17,11 +17,16 @@ RUN apt-get update \
         gcc \
         python3-dev \
         musl-dev \
+        libjpeg-dev \
+        zlib1g-dev \
+        libgeos-c1v5 \
     && rm -rf /var/lib/apt/lists/*
 
 # Configurar GDAL
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
+ENV GDAL_LIBRARY_PATH=/usr/lib/libgdal.so
+ENV GEOS_LIBRARY_PATH=/usr/lib/libgeos_c.so
 
 # Crear directorio de la aplicación
 WORKDIR /app
@@ -29,6 +34,10 @@ WORKDIR /app
 # Instalar dependencias de Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Verificar la instalación de GDAL
+RUN python -c "from osgeo import gdal; print('GDAL Version:', gdal.__version__)"
+RUN python -c "from django.contrib.gis.geos import GEOSGeometry"
 
 # Copiar el proyecto
 COPY . .
