@@ -109,8 +109,8 @@ WSGI_APPLICATION = 'palma_tourism.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default='postgis://postgres:postgres@localhost:5432/palma_tourism',
+        engine='django.contrib.gis.db.backends.postgis',
         conn_max_age=600,
-        conn_health_checks=True,
     )
 }
 
