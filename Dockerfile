@@ -12,9 +12,6 @@ RUN apt-get update && apt-get install -y \
     libproj-dev \
     libgeos-dev \
     postgresql-client \
-    postgresql \
-    postgresql-contrib \
-    postgis \
     # Dependencias para Pillow
     libjpeg-dev \
     libpng-dev \
