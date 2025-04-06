@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+echo "Checking environment..."
+if [ -z "$DATABASE_URL" ]; then
+    echo "ERROR: DATABASE_URL is not set"
+    exit 1
+fi
+
 echo "Checking GDAL installation..."
 python -c "from osgeo import gdal; print('GDAL Version:', gdal.__version__)"
 python -c "from django.contrib.gis.geos import GEOSGeometry"
@@ -10,7 +16,6 @@ python << END
 import sys
 import time
 import os
-from urllib.parse import urlparse
 import django
 from django.db import connections
 from django.db.utils import OperationalError
@@ -19,14 +24,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'palma_tourism.settings')
 django.setup()
 
 print("Database configuration:")
-db_url = os.getenv('DATABASE_URL', 'not set')
-print(f"DATABASE_URL: {db_url}")
-
-if db_url != 'not set':
-    parsed = urlparse(db_url)
-    print(f"Host: {parsed.hostname}")
-    print(f"Port: {parsed.port}")
-    print(f"Database: {parsed.path[1:]}")  # Remove leading slash
+db_url = os.getenv('DATABASE_URL')
+print(f"DATABASE_URL is {'set' if db_url else 'not set'}")
 
 retries = 30
 while retries > 0:
@@ -46,10 +45,10 @@ while retries > 0:
 END
 
 echo "Running migrations..."
-python manage.py migrate --noinit
+python manage.py migrate --noinput
 
 echo "Collecting static files..."
-python manage.py collectstatic --noinput --verbosity 2
+python manage.py collectstatic --noinput
 
 echo "Starting Gunicorn..."
 exec gunicorn palma_tourism.wsgi:application \

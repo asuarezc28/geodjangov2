@@ -107,29 +107,14 @@ WSGI_APPLICATION = 'palma_tourism.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 # Database configuration
-if os.getenv('DATABASE_URL'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.contrib.gis.db.backends.postgis',
-            **dj_database_url.parse(os.getenv('DATABASE_URL'))
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.contrib.gis.db.backends.postgis',
-            'NAME': os.getenv('PGDATABASE', 'palma_tourism'),
-            'USER': os.getenv('PGUSER', 'postgres'),
-            'PASSWORD': os.getenv('PGPASSWORD', 'postgres'),
-            'HOST': os.getenv('PGHOST', 'localhost'),
-            'PORT': os.getenv('PGPORT', '5432'),
-        }
-    }
-
-if os.getenv('RAILWAY_ENVIRONMENT'):
-    DATABASES['default']['OPTIONS'] = {
-        'sslmode': 'require'
-    }
+DATABASES = {
+    'default': dj_database_url.config(
+        default='postgis://postgres:postgres@localhost:5432/palma_tourism',
+        engine='django.contrib.gis.db.backends.postgis',
+        conn_max_age=600,
+        ssl_require=True if os.getenv('RAILWAY_ENVIRONMENT') else False,
+    )
+}
 
 
 # Password validation
