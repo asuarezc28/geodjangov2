@@ -2,8 +2,8 @@
 set -e
 
 echo "Checking environment..."
-if [ -z "$DATABASE_URL" ]; then
-    echo "ERROR: DATABASE_URL is not set"
+if [ -z "$DATABASE_PUBLIC_URL" ]; then
+    echo "ERROR: DATABASE_PUBLIC_URL is not set"
     exit 1
 fi
 
@@ -24,8 +24,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'palma_tourism.settings')
 django.setup()
 
 print("Database configuration:")
-db_url = os.getenv('DATABASE_URL')
-print(f"DATABASE_URL is {'set' if db_url else 'not set'}")
+db_url = os.getenv('DATABASE_PUBLIC_URL')
+print(f"DATABASE_PUBLIC_URL is {'set' if db_url else 'not set'}")
 
 retries = 30
 while retries > 0:

@@ -109,12 +109,19 @@ WSGI_APPLICATION = 'palma_tourism.wsgi.application'
 # Database configuration
 DATABASES = {
     'default': dj_database_url.config(
+        env='DATABASE_PUBLIC_URL',
         default='postgis://postgres:postgres@localhost:5432/palma_tourism',
         engine='django.contrib.gis.db.backends.postgis',
         conn_max_age=600,
         ssl_require=True if os.getenv('RAILWAY_ENVIRONMENT') else False,
     )
 }
+
+# Ensure we're using SSL in production
+if os.getenv('RAILWAY_ENVIRONMENT'):
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': 'require'
+    }
 
 
 # Password validation
