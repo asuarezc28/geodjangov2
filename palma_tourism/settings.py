@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
 
 # Cargar variables de entorno
 load_dotenv()
@@ -106,19 +107,19 @@ WSGI_APPLICATION = 'palma_tourism.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': os.getenv('DATABASE_NAME') or os.getenv('PGDATABASE', 'palma_tourism'),
-        'USER': os.getenv('DATABASE_USER') or os.getenv('PGUSER', 'postgres'),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD') or os.getenv('PGPASSWORD', 'postgres'),
-        'HOST': os.getenv('DATABASE_HOST') or os.getenv('PGHOST', 'localhost'),
-        'PORT': os.getenv('DATABASE_PORT') or os.getenv('PGPORT', '5432'),
-        'CONN_MAX_AGE': 60,
-        'OPTIONS': {
-            'connect_timeout': 10,
-        }
-    }
+    'default': dj_database_url.config(
+        default='postgis://postgres:postgres@localhost:5432/palma_tourism',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
+
+if os.getenv('RAILWAY_ENVIRONMENT'):
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True,
+    )
 
 
 # Password validation
