@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y \
     libproj-dev \
     libgeos-dev \
     postgresql-client \
+    # Dependencias para Pillow
+    libjpeg-dev \
+    libpng-dev \
+    zlib1g-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
