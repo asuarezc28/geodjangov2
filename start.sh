@@ -1,28 +1,23 @@
 #!/bin/bash
+set -e
 
-# Dar tiempo a que PostgreSQL esté disponible
-echo "Waiting for PostgreSQL..."
+echo "Checking GDAL installation..."
+python -c "from osgeo import gdal; print('GDAL Version:', gdal.__version__)"
+python -c "from django.contrib.gis.geos import GEOSGeometry"
+
+echo "Waiting for database..."
 sleep 10
-echo "Continuing with deployment..."
 
-# Aplicar migraciones
-echo "Applying migrations..."
+echo "Running migrations..."
 python manage.py migrate --noinput
 
-# Recolectar archivos estáticos
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Iniciar Gunicorn
 echo "Starting Gunicorn..."
 exec gunicorn palma_tourism.wsgi:application \
     --bind 0.0.0.0:${PORT:-8000} \
     --workers 1 \
     --timeout 120 \
-    --graceful-timeout 60 \
-    --max-requests 1000 \
-    --max-requests-jitter 50 \
-    --log-level info \
     --access-logfile - \
-    --error-logfile - \
-    --capture-output 
+    --error-logfile - 
