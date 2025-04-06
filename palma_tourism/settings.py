@@ -104,11 +104,11 @@ WSGI_APPLICATION = 'palma_tourism.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': os.getenv('DATABASE_NAME', 'palma_tourism'),
-        'USER': os.getenv('DATABASE_USER', 'postgres'),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'postgres'),
-        'HOST': os.getenv('DATABASE_HOST', 'localhost'),
-        'PORT': os.getenv('DATABASE_PORT', '5432'),
+        'NAME': os.getenv('DATABASE_NAME') or os.getenv('PGDATABASE', 'palma_tourism'),
+        'USER': os.getenv('DATABASE_USER') or os.getenv('PGUSER', 'postgres'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD') or os.getenv('PGPASSWORD', 'postgres'),
+        'HOST': os.getenv('DATABASE_HOST') or os.getenv('PGHOST', 'localhost'),
+        'PORT': os.getenv('DATABASE_PORT') or os.getenv('PGPORT', '5432'),
     }
 }
 
