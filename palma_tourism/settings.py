@@ -39,9 +39,9 @@ else:
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-z+y-#6r7kq@tzwah)_+e#=o1%t0!1m#gr_^bponj&2p!y7&pgj')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']  # Configura esto apropiadamente en producción
+ALLOWED_HOSTS = ['*']  # Ajusta esto según tus necesidades de seguridad
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.railway.app',
@@ -109,6 +109,10 @@ DATABASES = {
         'PASSWORD': os.getenv('DATABASE_PASSWORD') or os.getenv('PGPASSWORD', 'postgres'),
         'HOST': os.getenv('DATABASE_HOST') or os.getenv('PGHOST', 'localhost'),
         'PORT': os.getenv('DATABASE_PORT') or os.getenv('PGPORT', '5432'),
+        'CONN_MAX_AGE': 60,
+        'OPTIONS': {
+            'connect_timeout': 10,
+        }
     }
 }
 
@@ -170,4 +174,26 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+}
+
+# Configuración de logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
 }

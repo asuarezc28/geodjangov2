@@ -17,8 +17,12 @@ python manage.py collectstatic --noinput
 echo "Starting Gunicorn..."
 exec gunicorn palma_tourism.wsgi:application \
     --bind 0.0.0.0:${PORT:-8000} \
-    --workers 2 \
-    --threads 2 \
-    --log-level debug \
+    --workers 1 \
+    --timeout 120 \
+    --graceful-timeout 60 \
+    --max-requests 1000 \
+    --max-requests-jitter 50 \
+    --log-level info \
     --access-logfile - \
-    --error-logfile - 
+    --error-logfile - \
+    --capture-output 
