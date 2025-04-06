@@ -9,43 +9,30 @@ echo "Waiting for database..."
 python << END
 import sys
 import time
-import psycopg2
+from django.db import connections
+from django.db.utils import OperationalError
+import django
 import os
-from urllib.parse import urlparse
 
-database_url = os.getenv('DATABASE_URL')
-if not database_url:
-    print("No DATABASE_URL found")
-    sys.exit(1)
+# Configure Django settings
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'palma_tourism.settings')
+django.setup()
 
-print(f"Attempting to connect to database...")
-url = urlparse(database_url)
-print(f"Host: {url.hostname}")
-print(f"Port: {url.port}")
-print(f"Database: {url.path[1:]}")
-
-# Wait for database to be ready
-max_retries = 30
-retry_count = 0
-while retry_count < max_retries:
+# Try to connect to the database
+retries = 30
+while retries > 0:
     try:
-        print(f"Connection attempt {retry_count + 1}/{max_retries}")
-        conn = psycopg2.connect(
-            database_url,
-            connect_timeout=5
-        )
-        conn.close()
+        connections['default'].ensure_connection()
         print("Database connection successful!")
         break
-    except psycopg2.OperationalError as e:
-        print(f"Database connection failed: {e}")
-        retry_count += 1
-        if retry_count < max_retries:
-            print("Retrying in 1 second...")
-            time.sleep(1)
-        else:
-            print("Max retries reached. Exiting.")
+    except OperationalError as e:
+        retries -= 1
+        if retries == 0:
+            print("Could not connect to database!")
+            print(f"Error: {e}")
             sys.exit(1)
+        print(f"Database connection failed. {retries} retries left...")
+        time.sleep(1)
 END
 
 echo "Running migrations..."
