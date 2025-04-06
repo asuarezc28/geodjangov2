@@ -19,6 +19,8 @@ import os
 import django
 from django.db import connections
 from django.db.utils import OperationalError
+import psycopg2
+from urllib.parse import urlparse
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'palma_tourism.settings')
 django.setup()
@@ -26,6 +28,35 @@ django.setup()
 print("Database configuration:")
 db_url = os.getenv('DATABASE_PUBLIC_URL')
 print(f"DATABASE_PUBLIC_URL is {'set' if db_url else 'not set'}")
+
+# Parse the URL to get connection details
+url = urlparse(db_url)
+dbname = url.path[1:]
+user = url.username
+password = url.password
+host = url.hostname
+port = url.port
+
+# Try to connect and create PostGIS extension
+try:
+    conn = psycopg2.connect(
+        dbname=dbname,
+        user=user,
+        password=password,
+        host=host,
+        port=port
+    )
+    conn.autocommit = True
+    cur = conn.cursor()
+    print("Creating PostGIS extensions if they don't exist...")
+    cur.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
+    cur.execute("CREATE EXTENSION IF NOT EXISTS postgis_topology;")
+    cur.close()
+    conn.close()
+    print("PostGIS extensions created successfully!")
+except Exception as e:
+    print(f"Error creating PostGIS extensions: {str(e)}")
+    # Continue anyway as the extensions might already exist
 
 retries = 30
 while retries > 0:

@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.10
 
 ENV PYTHONUNBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
     libproj-dev \
     libgeos-dev \
     postgresql-client \
+    postgresql-common \
+    postgresql \
+    postgresql-14-postgis-3 \
     # Dependencias para Pillow
     libjpeg-dev \
     libpng-dev \
