@@ -6,6 +6,7 @@ from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 from .models import PointOfInterest, Restaurant, Event, Itinerary, ItineraryPoint, ItineraryReview
 from .serializers import (
     PointOfInterestSerializer, RestaurantSerializer, EventSerializer,
@@ -14,15 +15,17 @@ from .serializers import (
 )
 from django.utils import timezone
 from django.db.models import Avg, Max
+from django.http import JsonResponse
 
 # Create your views here.
 
 class PointOfInterestViewSet(viewsets.ModelViewSet):
     queryset = PointOfInterest.objects.all()
     serializer_class = PointOfInterestSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['type', 'difficulty']
     search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
 
     @action(detail=False, methods=['get'])
     def nearby(self, request):
@@ -84,9 +87,10 @@ class PointOfInterestViewSet(viewsets.ModelViewSet):
 class RestaurantViewSet(viewsets.ModelViewSet):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['cuisine_type', 'price_range']
     search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
 
     @action(detail=False, methods=['get'])
     def nearby(self, request):
@@ -122,8 +126,10 @@ class RestaurantViewSet(viewsets.ModelViewSet):
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['start_date', 'end_date']
     search_fields = ['name', 'description']
+    ordering_fields = ['name', 'start_date', 'created_at']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -167,8 +173,11 @@ class EventViewSet(viewsets.ModelViewSet):
 
 class ItineraryViewSet(viewsets.ModelViewSet):
     queryset = Itinerary.objects.all()
-    filter_backends = [filters.SearchFilter]
+    serializer_class = ItinerarySerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['start_date', 'end_date', 'is_completed']
     search_fields = ['title', 'description']
+    ordering_fields = ['title', 'start_date', 'created_at']
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -337,4 +346,4 @@ class ItineraryViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 def health_check(request):
-    return Response({"status": "ok"})
+    return JsonResponse({"status": "ok"})
