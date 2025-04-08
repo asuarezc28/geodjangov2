@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from django.contrib.auth.models import User
 from .models import PointOfInterest, Restaurant, Event, Itinerary, ItineraryPoint, ItineraryReview, ReviewPhoto
 
@@ -7,16 +8,18 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email']
 
-class PointOfInterestSerializer(serializers.ModelSerializer):
+class PointOfInterestSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = PointOfInterest
+        geo_field = 'location'
         fields = ['id', 'name', 'description', 'location', 'address', 'type',
                  'difficulty', 'estimated_time', 'created_at', 'updated_at']
 
-class RestaurantSerializer(serializers.ModelSerializer):
+class RestaurantSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Restaurant
-        fields = ['id', 'name', 'description', 'address',
+        geo_field = 'location'
+        fields = ['id', 'name', 'description', 'location', 'address',
                  'cuisine_type', 'price_range', 'opening_hours', 'created_at', 'updated_at']
 
 class EventSerializer(serializers.ModelSerializer):
