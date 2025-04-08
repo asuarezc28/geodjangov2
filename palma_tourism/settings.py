@@ -22,7 +22,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Configuración de GDAL
-if os.getenv('RAILWAY_ENVIRONMENT'):
+if os.getenv('RENDER'):
     GDAL_LIBRARY_PATH = '/usr/lib/x86_64-linux-gnu/libgdal.so'
     GEOS_LIBRARY_PATH = '/usr/lib/x86_64-linux-gnu/libgeos_c.so'
     
@@ -46,10 +46,10 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-z+y-#6r7kq@tzwah)_+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']  # Ajusta esto según tus necesidades de seguridad
+ALLOWED_HOSTS = ['*']  # Temporalmente permitimos todos los hosts
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://*.railway.app',
+    'https://*.onrender.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
