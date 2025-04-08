@@ -10,7 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
 class PointOfInterestSerializer(serializers.ModelSerializer):
     class Meta:
         model = PointOfInterest
-        fields = ['id', 'name', 'description', 'address', 'type',
+        fields = ['id', 'name', 'description', 'location', 'address', 'type',
                  'difficulty', 'estimated_time', 'created_at', 'updated_at']
 
 class RestaurantSerializer(serializers.ModelSerializer):
