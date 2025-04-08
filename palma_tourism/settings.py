@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'rest_framework',
+    'rest_framework_gis',
     'corsheaders',
     'tourism',
 ]
@@ -113,12 +114,12 @@ DATABASES = {
         default='postgis://postgres:postgres@localhost:5432/palma_tourism',
         engine='django.contrib.gis.db.backends.postgis',
         conn_max_age=600,
-        ssl_require=True if os.getenv('RAILWAY_ENVIRONMENT') else False,
+        ssl_require=True if os.getenv('RENDER') else False,
     )
 }
 
 # Ensure we're using SSL in production
-if os.getenv('RAILWAY_ENVIRONMENT'):
+if os.getenv('RENDER'):
     DATABASES['default']['OPTIONS'] = {
         'sslmode': 'require'
     }

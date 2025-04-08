@@ -17,7 +17,7 @@ import sys
 import time
 import os
 import django
-from django.db import connections
+from django.db import connections, connection
 from django.db.utils import OperationalError
 import psycopg2
 from urllib.parse import urlparse
@@ -37,7 +37,7 @@ password = url.password
 host = url.hostname
 port = url.port
 
-# Try to connect and create PostGIS extension
+# Try to connect and check PostGIS
 try:
     conn = psycopg2.connect(
         dbname=dbname,
@@ -48,21 +48,43 @@ try:
     )
     conn.autocommit = True
     cur = conn.cursor()
-    print("Creating PostGIS extensions if they don't exist...")
+    
+    # Verificar si PostGIS está instalado
+    print("Checking PostGIS installation...")
+    cur.execute("SELECT PostGIS_version();")
+    postgis_version = cur.fetchone()[0]
+    print(f"PostGIS version: {postgis_version}")
+    
+    # Verificar extensiones instaladas
+    print("\nChecking installed extensions:")
+    cur.execute("SELECT extname, extversion FROM pg_extension;")
+    extensions = cur.fetchall()
+    for ext in extensions:
+        print(f"Extension: {ext[0]}, Version: {ext[1]}")
+    
+    print("\nTrying to create PostGIS extensions...")
     cur.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
     cur.execute("CREATE EXTENSION IF NOT EXISTS postgis_topology;")
+    print("PostGIS extensions created/verified successfully!")
+    
     cur.close()
     conn.close()
-    print("PostGIS extensions created successfully!")
 except Exception as e:
-    print(f"Error creating PostGIS extensions: {str(e)}")
+    print(f"Error with PostGIS: {str(e)}")
     # Continue anyway as the extensions might already exist
 
 retries = 30
 while retries > 0:
     try:
-        print(f"Attempting database connection... ({retries} attempts left)")
+        print(f"\nAttempting database connection... ({retries} attempts left)")
         connections['default'].ensure_connection()
+        
+        # Verificar que Django puede usar PostGIS
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT PostGIS_version();")
+            version = cursor.fetchone()[0]
+            print(f"Django can access PostGIS version: {version}")
+        
         print("Database connection successful!")
         break
     except OperationalError as e:
