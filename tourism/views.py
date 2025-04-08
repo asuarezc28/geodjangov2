@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from .models import PointOfInterest, Restaurant, Event, Itinerary, ItineraryPoint, ItineraryReview
 from .serializers import (
@@ -19,11 +18,13 @@ from django.http import JsonResponse
 
 # Create your views here.
 
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 class PointOfInterestViewSet(viewsets.ModelViewSet):
     queryset = PointOfInterest.objects.all()
     serializer_class = PointOfInterestSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['type', 'difficulty']
+    filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'created_at']
 
@@ -87,8 +88,7 @@ class PointOfInterestViewSet(viewsets.ModelViewSet):
 class RestaurantViewSet(viewsets.ModelViewSet):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['cuisine_type', 'price_range']
+    filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'created_at']
 
@@ -126,8 +126,7 @@ class RestaurantViewSet(viewsets.ModelViewSet):
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['start_date', 'end_date']
+    filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'start_date', 'created_at']
 
@@ -174,8 +173,7 @@ class EventViewSet(viewsets.ModelViewSet):
 class ItineraryViewSet(viewsets.ModelViewSet):
     queryset = Itinerary.objects.all()
     serializer_class = ItinerarySerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['start_date', 'end_date', 'is_completed']
+    filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['title', 'description']
     ordering_fields = ['title', 'start_date', 'created_at']
 
@@ -343,7 +341,3 @@ class ItineraryViewSet(viewsets.ModelViewSet):
             )
         except Exception as e:
             return Response({"error": str(e)}, status=400)
-
-@api_view(['GET'])
-def health_check(request):
-    return JsonResponse({"status": "ok"})

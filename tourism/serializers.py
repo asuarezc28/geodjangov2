@@ -8,6 +8,20 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email']
 
+# Serializers base para datos no geográficos
+class PointOfInterestBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PointOfInterest
+        fields = ['id', 'name', 'description', 'location', 'address', 'type',
+                 'difficulty', 'estimated_time', 'created_at', 'updated_at']
+
+class RestaurantBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Restaurant
+        fields = ['id', 'name', 'description', 'location', 'address',
+                 'cuisine_type', 'price_range', 'opening_hours', 'created_at', 'updated_at']
+
+# Serializers para la API con soporte GeoJSON
 class PointOfInterestSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = PointOfInterest
@@ -56,9 +70,9 @@ class ItineraryPointSerializer(serializers.ModelSerializer):
         Devuelve los detalles del punto según su tipo (POI, restaurante o evento)
         """
         if obj.point_of_interest:
-            return PointOfInterestSerializer(obj.point_of_interest).data
+            return PointOfInterestBaseSerializer(obj.point_of_interest).data
         elif obj.restaurant:
-            return RestaurantSerializer(obj.restaurant).data
+            return RestaurantBaseSerializer(obj.restaurant).data
         elif obj.event:
             return EventSerializer(obj.event).data
         return None
