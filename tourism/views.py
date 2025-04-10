@@ -437,3 +437,14 @@ class ItineraryViewSet(viewsets.ModelViewSet):
             )
         except Exception as e:
             return Response({"error": str(e)}, status=400)
+
+class ItineraryPointViewSet(viewsets.ModelViewSet):
+    queryset = ItineraryPoint.objects.all()
+    serializer_class = ItineraryPointSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    ordering_fields = ['day', 'order']
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return ItineraryPointCreateSerializer
+        return self.serializer_class
