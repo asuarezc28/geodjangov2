@@ -18,6 +18,7 @@ from django.http import JsonResponse
 import os
 from django.conf import settings
 from openai import OpenAI
+import json
 
 # Create your views here.
 
@@ -29,42 +30,92 @@ def generate_itinerary(request):
     # 1. Recibir la consulta del usuario
     user_query = request.data.get('query')
     
-    # 2. Llamar a GPT
+    # 2. Preparar el prompt para GPT
+    prompt = f"""
+    Como experto en turismo de La Palma, genera un itinerario basado en esta solicitud: {user_query}
+    
+    Devuelve la respuesta en este formato EXACTO:
+    {{
+        "display": "Texto formateado para mostrar al usuario con emojis y formato bonito",
+        "data": {{
+            "titulo": "Título del itinerario",
+            "description": "Descripción general",
+            "start_date": "YYYY-MM-DD",
+            "end_date": "YYYY-MM-DD",
+            "dias": [
+                {{
+                    "numero": 1,
+                    "titulo": "Título del día",
+                    "puntos": [
+                        {{
+                            "poi_id": 1,  // ID del punto de interés
+                            "orden": 1,    // Orden del punto en el día
+                            "notas": "Notas específicas para este punto"
+                        }}
+                    ]
+                }}
+            ]
+        }}
+    }}
+    
+    IMPORTANTE:
+    - Usa SOLO puntos de interés que existan en la base de datos
+    - Los poi_id deben ser IDs válidos de la base de datos
+    - El formato debe ser EXACTAMENTE como se muestra arriba
+    - Incluye emojis en el display para hacerlo más atractivo
+    """
+    
+    # 3. Llamar a GPT
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
     response = client.chat.completions.create(
         model=settings.GPT_CUSTOM_ID,
-        messages=[{"role": "user", "content": user_query}]
+        messages=[
+            {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma."},
+            {"role": "user", "content": prompt}
+        ]
     )
     
-    # 3. Procesar respuesta de GPT
-    gpt_response = response.choices[0].message.content
-    
-    # 4. Crear itinerario en DB
-    itinerary_data = gpt_response['data']
-    itinerary = Itinerary.objects.create(
-        title=itinerary_data['titulo'],
-        description=itinerary_data.get('description', ''),
-        start_date=itinerary_data.get('start_date'),
-        end_date=itinerary_data.get('end_date')
-    )
-    
-    # 5. Crear puntos del itinerario
-    for dia in itinerary_data['dias']:
-        for punto in dia['puntos']:
-            ItineraryPoint.objects.create(
-                itinerary=itinerary,
-                point_of_interest_id=punto['poi_id'],
-                day=dia['numero'],
-                order=punto['orden'],
-                notes=punto['notas']
-            )
-    
-    # 6. Devolver respuesta estructurada
-    return Response({
-        'display': gpt_response['display'],  # Texto para mostrar
-        'itinerary_id': itinerary.id,        # Para cargar el mapa
-        'points': itinerary.get_points_geojson()  # GeoJSON para el mapa
-    })
+    try:
+        # 4. Procesar respuesta de GPT
+        gpt_response = json.loads(response.choices[0].message.content)
+        
+        # 5. Crear itinerario en DB
+        itinerary_data = gpt_response['data']
+        itinerary = Itinerary.objects.create(
+            title=itinerary_data['titulo'],
+            description=itinerary_data.get('description', ''),
+            start_date=itinerary_data.get('start_date'),
+            end_date=itinerary_data.get('end_date')
+        )
+        
+        # 6. Crear puntos del itinerario
+        for dia in itinerary_data['dias']:
+            for punto in dia['puntos']:
+                ItineraryPoint.objects.create(
+                    itinerary=itinerary,
+                    point_of_interest_id=punto['poi_id'],
+                    day=dia['numero'],
+                    order=punto['orden'],
+                    notes=punto['notas']
+                )
+        
+        # 7. Devolver respuesta estructurada
+        return Response({
+            'display': gpt_response['display'],
+            'itinerary_id': itinerary.id,
+            'points': itinerary.get_points_geojson()
+        })
+        
+    except json.JSONDecodeError:
+        return Response(
+            {"error": "Error procesando la respuesta de GPT"},
+            status=500
+        )
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=500
+        )
 
 class PointOfInterestViewSet(viewsets.ModelViewSet):
     queryset = PointOfInterest.objects.all()
