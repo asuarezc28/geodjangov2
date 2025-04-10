@@ -448,3 +448,13 @@ class ItineraryPointViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update']:
             return ItineraryPointCreateSerializer
         return self.serializer_class
+
+class ItineraryReviewViewSet(viewsets.ModelViewSet):
+    queryset = ItineraryReview.objects.all()
+    serializer_class = ItineraryReviewSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ['comment']
+    ordering_fields = ['rating', 'created_at']
+
+    def perform_create(self, serializer):
+        serializer.save(user=None)  # Por ahora, sin usuario
