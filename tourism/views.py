@@ -25,10 +25,23 @@ import json
 def health_check(request):
     return JsonResponse({"status": "ok"})
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 def generate_itinerary(request):
+    if request.method == 'GET':
+        return Response({
+            "message": "Este endpoint espera una petición POST con un JSON que contenga el campo 'query'",
+            "example": {
+                "query": "Quiero un itinerario de 2 días en La Palma visitando el Roque de los Muchachos"
+            }
+        })
+    
     # 1. Recibir la consulta del usuario
     user_query = request.data.get('query')
+    if not user_query:
+        return Response(
+            {"error": "El campo 'query' es requerido"},
+            status=400
+        )
     
     # 2. Preparar el prompt para GPT
     prompt = f"""
@@ -65,17 +78,17 @@ def generate_itinerary(request):
     - Incluye emojis en el display para hacerlo más atractivo
     """
     
-    # 3. Llamar a GPT
-    client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    response = client.chat.completions.create(
-        model=settings.GPT_CUSTOM_ID,
-        messages=[
-            {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    
     try:
+        # 3. Llamar a GPT
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        response = client.chat.completions.create(
+            model=settings.GPT_CUSTOM_ID,
+            messages=[
+                {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
         # 4. Procesar respuesta de GPT
         gpt_response = json.loads(response.choices[0].message.content)
         
