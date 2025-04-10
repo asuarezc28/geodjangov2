@@ -15,11 +15,56 @@ from .serializers import (
 from django.utils import timezone
 from django.db.models import Avg, Max
 from django.http import JsonResponse
+import os
+from django.conf import settings
+from openai import OpenAI
 
 # Create your views here.
 
 def health_check(request):
     return JsonResponse({"status": "ok"})
+
+@api_view(['POST'])
+def generate_itinerary(request):
+    # 1. Recibir la consulta del usuario
+    user_query = request.data.get('query')
+    
+    # 2. Llamar a GPT
+    client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    response = client.chat.completions.create(
+        model=settings.GPT_CUSTOM_ID,
+        messages=[{"role": "user", "content": user_query}]
+    )
+    
+    # 3. Procesar respuesta de GPT
+    gpt_response = response.choices[0].message.content
+    
+    # 4. Crear itinerario en DB
+    itinerary_data = gpt_response['data']
+    itinerary = Itinerary.objects.create(
+        title=itinerary_data['titulo'],
+        description=itinerary_data.get('description', ''),
+        start_date=itinerary_data.get('start_date'),
+        end_date=itinerary_data.get('end_date')
+    )
+    
+    # 5. Crear puntos del itinerario
+    for dia in itinerary_data['dias']:
+        for punto in dia['puntos']:
+            ItineraryPoint.objects.create(
+                itinerary=itinerary,
+                point_of_interest_id=punto['poi_id'],
+                day=dia['numero'],
+                order=punto['orden'],
+                notes=punto['notas']
+            )
+    
+    # 6. Devolver respuesta estructurada
+    return Response({
+        'display': gpt_response['display'],  # Texto para mostrar
+        'itinerary_id': itinerary.id,        # Para cargar el mapa
+        'points': itinerary.get_points_geojson()  # GeoJSON para el mapa
+    })
 
 class PointOfInterestViewSet(viewsets.ModelViewSet):
     queryset = PointOfInterest.objects.all()

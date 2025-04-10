@@ -209,3 +209,9 @@ LOGGING = {
         },
     },
 }
+
+# OpenAI Configuration
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+GPT_CUSTOM_ID = os.getenv('GPT_CUSTOM_ID')
+
+

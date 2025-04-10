@@ -73,6 +73,33 @@ class Itinerary(models.Model):
     def __str__(self):
         return f"{self.title} ({self.start_date} - {self.end_date})"
 
+    def get_points_geojson(self):
+        points = []
+        for point in self.points.all():
+            if point.point_of_interest:
+                points.append({
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Point',
+                        'coordinates': [
+                            point.point_of_interest.location.x,
+                            point.point_of_interest.location.y
+                        ]
+                    },
+                    'properties': {
+                        'name': point.point_of_interest.name,
+                        'description': point.point_of_interest.description,
+                        'type': 'poi',
+                        'day': point.day,
+                        'order': point.order,
+                        'notes': point.notes
+                    }
+                })
+        return {
+            'type': 'FeatureCollection',
+            'features': points
+        }
+
 class ItineraryPoint(models.Model):
     itinerary = models.ForeignKey(Itinerary, related_name='points', on_delete=models.CASCADE)
     point_of_interest = models.ForeignKey(PointOfInterest, null=True, blank=True, on_delete=models.SET_NULL)
