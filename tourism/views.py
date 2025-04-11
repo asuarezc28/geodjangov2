@@ -70,7 +70,7 @@ def generate_itinerary(request):
         Usa SOLO los siguientes puntos de interés disponibles:
         {context}
         
-        Devuelve la respuesta en este formato EXACTO:
+        IMPORTANTE: Debes devolver EXACTAMENTE este formato JSON, sin texto adicional antes o después:
         {{
             "display": "Texto formateado para mostrar al usuario. Debe incluir:
             - Un título atractivo con emojis relevantes
@@ -83,19 +83,19 @@ def generate_itinerary(request):
             - Una conclusión con recomendaciones finales
             Usa emojis estratégicamente para hacer el texto más atractivo y fácil de leer.",
             "data": {{
-                "titulo": "Título del itinerario",
-                "description": "Descripción general",
-                "start_date": "YYYY-MM-DD",
-                "end_date": "YYYY-MM-DD",
+                "titulo": "Título del itinerario (OBLIGATORIO)",
+                "description": "Descripción general del itinerario (OBLIGATORIO)",
+                "start_date": "Fecha de inicio en formato YYYY-MM-DD (OBLIGATORIO)",
+                "end_date": "Fecha de fin en formato YYYY-MM-DD (OBLIGATORIO)",
                 "dias": [
                     {{
-                        "numero": 1,
-                        "titulo": "Título del día",
+                        "numero": 1,  // Número del día (OBLIGATORIO)
+                        "titulo": "Título del día (OBLIGATORIO)",
                         "puntos": [
                             {{
-                                "poi_id": 1,  // ID del punto de interés
-                                "orden": 1,    // Orden del punto en el día
-                                "notas": "Notas específicas para este punto"
+                                "poi_id": 1,  // ID del punto de interés (OBLIGATORIO)
+                                "orden": 1,    // Orden del punto en el día (OBLIGATORIO)
+                                "notas": "Notas específicas para este punto (OBLIGATORIO)"
                             }}
                         ]
                     }}
@@ -103,13 +103,15 @@ def generate_itinerary(request):
             }}
         }}
         
-        IMPORTANTE:
-        - Usa SOLO los puntos de interés listados arriba
-        - Los poi_id deben ser IDs válidos de la lista proporcionada
-        - El formato debe ser EXACTAMENTE como se muestra arriba
-        - El display debe ser detallado, informativo y atractivo visualmente
-        - Usa emojis relevantes para cada sección y punto de interés
-        - Incluye horarios recomendados y consejos prácticos
+        REGLAS ESTRICTAS:
+        1. Todos los campos marcados como OBLIGATORIO deben estar presentes
+        2. El formato debe ser EXACTAMENTE como se muestra arriba
+        3. No añadas texto antes o después del JSON
+        4. Usa SOLO los puntos de interés listados arriba
+        5. Los poi_id deben ser IDs válidos de la lista proporcionada
+        6. El display debe ser detallado, informativo y atractivo visualmente
+        7. Usa emojis relevantes para cada sección y punto de interés
+        8. Incluye horarios recomendados y consejos prácticos
         """
         
         # 5. Llamar a GPT
