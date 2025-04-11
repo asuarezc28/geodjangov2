@@ -120,11 +120,12 @@ def generate_itinerary(request):
         # 5. Llamar a GPT
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Modelo correcto
+            model="gpt-4-1106-preview",  # Modelo más reciente que maneja mejor JSON
             messages=[
-                {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma."},
+                {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma. Debes responder SOLO con un JSON válido, sin texto adicional."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            response_format={ "type": "json_object" }  # Forzar formato JSON
         )
         
         # 6. Procesar respuesta de GPT
