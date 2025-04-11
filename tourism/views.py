@@ -44,7 +44,7 @@ def generate_itinerary(request):
         )
     
     try:
-        # 2. Obtener puntos de interés de la base de datos
+        # 2. Obtener todos los puntos de interés
         points_of_interest = PointOfInterest.objects.all()
         pois_data = []
         
@@ -104,7 +104,7 @@ def generate_itinerary(request):
         # 5. Llamar a GPT
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",  # Usando el modelo estándar
+            model="gpt-4-turbo",  # Usando el modelo estándar
             messages=[
                 {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma."},
                 {"role": "user", "content": prompt}
