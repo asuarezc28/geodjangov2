@@ -112,7 +112,35 @@ def generate_itinerary(request):
         )
         
         # 6. Procesar respuesta de GPT
-        gpt_response = json.loads(response.choices[0].message.content)
+        try:
+            # Limpiar la respuesta de GPT para asegurar que sea un JSON válido
+            content = response.choices[0].message.content.strip()
+            # Buscar el primer { y el último } para extraer solo el JSON
+            start = content.find('{')
+            end = content.rfind('}') + 1
+            if start == -1 or end == 0:
+                raise ValueError("No se encontró un JSON válido en la respuesta")
+            
+            json_str = content[start:end]
+            gpt_response = json.loads(json_str)
+            
+            # Validar que la respuesta tenga la estructura esperada
+            if not all(key in gpt_response for key in ['display', 'data']):
+                raise ValueError("La respuesta no tiene la estructura esperada")
+            
+            if not all(key in gpt_response['data'] for key in ['titulo', 'description', 'start_date', 'end_date', 'dias']):
+                raise ValueError("La respuesta no tiene todos los campos requeridos")
+            
+        except json.JSONDecodeError as e:
+            return Response(
+                {"error": f"Error al decodificar la respuesta de GPT: {str(e)}"},
+                status=500
+            )
+        except ValueError as e:
+            return Response(
+                {"error": f"Error en la estructura de la respuesta: {str(e)}"},
+                status=500
+            )
         
         # 7. Crear itinerario en DB
         itinerary_data = gpt_response['data']
@@ -141,11 +169,6 @@ def generate_itinerary(request):
             'points': itinerary.get_points_geojson()
         })
         
-    except json.JSONDecodeError:
-        return Response(
-            {"error": "Error procesando la respuesta de GPT"},
-            status=500
-        )
     except Exception as e:
         return Response(
             {"error": str(e)},
