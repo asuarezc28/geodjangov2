@@ -19,6 +19,7 @@ import os
 from django.conf import settings
 from openai import OpenAI
 import json
+import re
 
 # Create your views here.
 
@@ -130,32 +131,61 @@ def generate_itinerary(request):
         
         # 6. Procesar respuesta de GPT
         try:
-            # Limpiar la respuesta de GPT para asegurar que sea un JSON válido
+            # Obtener la respuesta de GPT
             content = response.choices[0].message.content.strip()
-            # Buscar el primer { y el último } para extraer solo el JSON
-            start = content.find('{')
-            end = content.rfind('}') + 1
-            if start == -1 or end == 0:
-                raise ValueError("No se encontró un JSON válido en la respuesta")
             
-            json_str = content[start:end]
-            gpt_response = json.loads(json_str)
+            # Extraer la información relevante usando expresiones regulares
             
-            # Validar que la respuesta tenga la estructura esperada
-            if not all(key in gpt_response for key in ['display', 'data']):
-                raise ValueError("La respuesta no tiene la estructura esperada")
+            # Extraer el display
+            display_match = re.search(r'"display":\s*"([^"]*)"', content)
+            if not display_match:
+                raise ValueError("No se encontró el campo 'display' en la respuesta")
+            display = display_match.group(1)
             
-            if not all(key in gpt_response['data'] for key in ['titulo', 'description', 'start_date', 'end_date', 'dias']):
-                raise ValueError("La respuesta no tiene todos los campos requeridos")
+            # Extraer el título
+            titulo_match = re.search(r'"titulo":\s*"([^"]*)"', content)
+            if not titulo_match:
+                raise ValueError("No se encontró el campo 'titulo' en la respuesta")
+            titulo = titulo_match.group(1)
             
-        except json.JSONDecodeError as e:
+            # Extraer la descripción
+            description_match = re.search(r'"description":\s*"([^"]*)"', content)
+            if not description_match:
+                raise ValueError("No se encontró el campo 'description' en la respuesta")
+            description = description_match.group(1)
+            
+            # Extraer las fechas
+            start_date_match = re.search(r'"start_date":\s*"([^"]*)"', content)
+            if not start_date_match:
+                raise ValueError("No se encontró el campo 'start_date' en la respuesta")
+            start_date = start_date_match.group(1)
+            
+            end_date_match = re.search(r'"end_date":\s*"([^"]*)"', content)
+            if not end_date_match:
+                raise ValueError("No se encontró el campo 'end_date' en la respuesta")
+            end_date = end_date_match.group(1)
+            
+            # Extraer los días
+            dias_match = re.search(r'"dias":\s*(\[.*?\])', content, re.DOTALL)
+            if not dias_match:
+                raise ValueError("No se encontró el campo 'dias' en la respuesta")
+            dias_str = dias_match.group(1)
+            
+            # Construir el JSON manualmente
+            gpt_response = {
+                "display": display,
+                "data": {
+                    "titulo": titulo,
+                    "description": description,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "dias": json.loads(dias_str)
+                }
+            }
+            
+        except Exception as e:
             return Response(
-                {"error": f"Error al decodificar la respuesta de GPT: {str(e)}"},
-                status=500
-            )
-        except ValueError as e:
-            return Response(
-                {"error": f"Error en la estructura de la respuesta: {str(e)}"},
+                {"error": f"Error procesando la respuesta de GPT: {str(e)}"},
                 status=500
             )
         
