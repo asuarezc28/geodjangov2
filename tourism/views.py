@@ -71,7 +71,7 @@ def generate_itinerary(request):
         Usa SOLO los siguientes puntos de interés disponibles:
         {context}
         
-        IMPORTANTE: Debes devolver EXACTAMENTE este formato JSON, sin texto adicional antes o después:
+        IMPORTANTE: Debes responder EXACTAMENTE con este JSON, sin ningún texto adicional antes o después:
         {{
             "display": "Texto formateado para mostrar al usuario. Debe incluir:
             - Un título atractivo con emojis relevantes
@@ -86,8 +86,8 @@ def generate_itinerary(request):
             "data": {{
                 "titulo": "Título del itinerario (OBLIGATORIO)",
                 "description": "Descripción general del itinerario (OBLIGATORIO)",
-                "start_date": "2024-03-15",  // Fecha de inicio en formato YYYY-MM-DD (OBLIGATORIO, debe ser una fecha real)
-                "end_date": "2024-03-16",    // Fecha de fin en formato YYYY-MM-DD (OBLIGATORIO, debe ser una fecha real)
+                "start_date": "2024-03-15",  // Fecha de inicio en formato YYYY-MM-DD (OBLIGATORIO)
+                "end_date": "2024-03-16",    // Fecha de fin en formato YYYY-MM-DD (OBLIGATORIO)
                 "dias": [
                     {{
                         "numero": 1,  // Número del día (OBLIGATORIO)
@@ -105,9 +105,9 @@ def generate_itinerary(request):
         }}
         
         REGLAS ESTRICTAS:
-        1. Todos los campos marcados como OBLIGATORIO deben estar presentes
-        2. El formato debe ser EXACTAMENTE como se muestra arriba
-        3. No añadas texto antes o después del JSON
+        1. Responde SOLO con el JSON, sin ningún texto adicional
+        2. No incluyas ```json``` ni ningún otro marcador
+        3. No incluyas explicaciones ni comentarios
         4. Usa SOLO los puntos de interés listados arriba
         5. Los poi_id deben ser IDs válidos de la lista proporcionada
         6. El display debe ser detallado, informativo y atractivo visualmente
@@ -133,11 +133,13 @@ def generate_itinerary(request):
         try:
             # Obtener la respuesta de GPT
             content = response.choices[0].message.content.strip()
+            print("Respuesta de GPT:", content)  # Log de la respuesta completa
             
             # Intentar parsear directamente el JSON
             try:
                 gpt_response = json.loads(content)
             except json.JSONDecodeError as e:
+                print("Error al parsear JSON:", str(e))  # Log del error de parseo
                 # Si falla, intentar limpiar el string
                 content = content.replace('\n', '').replace('\r', '').replace('\t', '')
                 # Buscar el primer { y el último }
@@ -146,6 +148,7 @@ def generate_itinerary(request):
                 if start == -1 or end == 0:
                     raise ValueError("No se encontró un JSON válido en la respuesta")
                 json_str = content[start:end]
+                print("JSON extraído:", json_str)  # Log del JSON extraído
                 gpt_response = json.loads(json_str)
             
             # Validar que la respuesta tenga la estructura esperada
@@ -159,6 +162,7 @@ def generate_itinerary(request):
                 raise ValueError("La respuesta no tiene todos los campos requeridos")
             
         except Exception as e:
+            print("Error completo:", str(e))  # Log del error completo
             return Response(
                 {"error": f"Error procesando la respuesta de GPT: {str(e)}\nContenido recibido: {content}"},
                 status=500
