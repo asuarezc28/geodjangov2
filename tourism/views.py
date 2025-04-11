@@ -171,6 +171,14 @@ def generate_itinerary(request):
                 raise ValueError("No se encontró el campo 'dias' en la respuesta")
             dias_str = dias_match.group(1)
             
+            try:
+                # Intentar parsear los días como JSON
+                dias = json.loads(dias_str)
+            except json.JSONDecodeError:
+                # Si falla, intentar limpiar el string
+                dias_str = dias_str.replace('\n', '').replace('\r', '').replace('\t', '')
+                dias = json.loads(dias_str)
+            
             # Construir el JSON manualmente
             gpt_response = {
                 "display": display,
@@ -179,7 +187,7 @@ def generate_itinerary(request):
                     "description": description,
                     "start_date": start_date,
                     "end_date": end_date,
-                    "dias": json.loads(dias_str)
+                    "dias": dias
                 }
             }
             
