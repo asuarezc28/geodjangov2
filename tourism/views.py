@@ -72,7 +72,16 @@ def generate_itinerary(request):
         
         Devuelve la respuesta en este formato EXACTO:
         {{
-            "display": "Texto formateado para mostrar al usuario con emojis y formato bonito",
+            "display": "Texto formateado para mostrar al usuario. Debe incluir:
+            - Un título atractivo con emojis relevantes
+            - Una breve introducción sobre el itinerario
+            - Para cada día:
+              * Un subtítulo con el número de día y emojis
+              * Una descripción de las actividades del día
+              * Los puntos de interés a visitar con sus horarios recomendados
+              * Consejos prácticos (qué llevar, mejor hora para visitar, etc.)
+            - Una conclusión con recomendaciones finales
+            Usa emojis estratégicamente para hacer el texto más atractivo y fácil de leer.",
             "data": {{
                 "titulo": "Título del itinerario",
                 "description": "Descripción general",
@@ -98,7 +107,9 @@ def generate_itinerary(request):
         - Usa SOLO los puntos de interés listados arriba
         - Los poi_id deben ser IDs válidos de la lista proporcionada
         - El formato debe ser EXACTAMENTE como se muestra arriba
-        - Incluye emojis en el display para hacerlo más atractivo
+        - El display debe ser detallado, informativo y atractivo visualmente
+        - Usa emojis relevantes para cada sección y punto de interés
+        - Incluye horarios recomendados y consejos prácticos
         """
         
         # 5. Llamar a GPT
