@@ -43,56 +43,78 @@ def generate_itinerary(request):
             status=400
         )
     
-    # 2. Preparar el prompt para GPT
-    prompt = f"""
-    Como experto en turismo de La Palma, genera un itinerario basado en esta solicitud: {user_query}
-    
-    Devuelve la respuesta en este formato EXACTO:
-    {{
-        "display": "Texto formateado para mostrar al usuario con emojis y formato bonito",
-        "data": {{
-            "titulo": "Título del itinerario",
-            "description": "Descripción general",
-            "start_date": "YYYY-MM-DD",
-            "end_date": "YYYY-MM-DD",
-            "dias": [
-                {{
-                    "numero": 1,
-                    "titulo": "Título del día",
-                    "puntos": [
-                        {{
-                            "poi_id": 1,  // ID del punto de interés
-                            "orden": 1,    // Orden del punto en el día
-                            "notas": "Notas específicas para este punto"
-                        }}
-                    ]
-                }}
-            ]
-        }}
-    }}
-    
-    IMPORTANTE:
-    - Usa SOLO puntos de interés que existan en la base de datos
-    - Los poi_id deben ser IDs válidos de la base de datos
-    - El formato debe ser EXACTAMENTE como se muestra arriba
-    - Incluye emojis en el display para hacerlo más atractivo
-    """
-    
     try:
-        # 3. Llamar a GPT
+        # 2. Obtener puntos de interés de la base de datos
+        points_of_interest = PointOfInterest.objects.all()
+        pois_data = []
+        
+        for poi in points_of_interest:
+            pois_data.append({
+                'id': poi.id,
+                'name': poi.name,
+                'description': poi.description,
+                'type': poi.type,
+                'difficulty': poi.difficulty
+            })
+        
+        # 3. Construir el contexto para GPT
+        context = "\n".join([
+            f"- {poi['name']} (ID: {poi['id']}): {poi['description']} - Tipo: {poi['type']}, Dificultad: {poi['difficulty']}"
+            for poi in pois_data
+        ])
+        
+        # 4. Preparar el prompt para GPT
+        prompt = f"""
+        Como experto en turismo de La Palma, genera un itinerario basado en esta solicitud: {user_query}
+        
+        Usa SOLO los siguientes puntos de interés disponibles:
+        {context}
+        
+        Devuelve la respuesta en este formato EXACTO:
+        {{
+            "display": "Texto formateado para mostrar al usuario con emojis y formato bonito",
+            "data": {{
+                "titulo": "Título del itinerario",
+                "description": "Descripción general",
+                "start_date": "YYYY-MM-DD",
+                "end_date": "YYYY-MM-DD",
+                "dias": [
+                    {{
+                        "numero": 1,
+                        "titulo": "Título del día",
+                        "puntos": [
+                            {{
+                                "poi_id": 1,  // ID del punto de interés
+                                "orden": 1,    // Orden del punto en el día
+                                "notas": "Notas específicas para este punto"
+                            }}
+                        ]
+                    }}
+                ]
+            }}
+        }}
+        
+        IMPORTANTE:
+        - Usa SOLO los puntos de interés listados arriba
+        - Los poi_id deben ser IDs válidos de la lista proporcionada
+        - El formato debe ser EXACTAMENTE como se muestra arriba
+        - Incluye emojis en el display para hacerlo más atractivo
+        """
+        
+        # 5. Llamar a GPT
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
-            model=settings.GPT_CUSTOM_ID,
+            model="gpt-4-turbo-preview",  # Usando el modelo estándar
             messages=[
                 {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma."},
                 {"role": "user", "content": prompt}
             ]
         )
         
-        # 4. Procesar respuesta de GPT
+        # 6. Procesar respuesta de GPT
         gpt_response = json.loads(response.choices[0].message.content)
         
-        # 5. Crear itinerario en DB
+        # 7. Crear itinerario en DB
         itinerary_data = gpt_response['data']
         itinerary = Itinerary.objects.create(
             title=itinerary_data['titulo'],
@@ -101,7 +123,7 @@ def generate_itinerary(request):
             end_date=itinerary_data.get('end_date')
         )
         
-        # 6. Crear puntos del itinerario
+        # 8. Crear puntos del itinerario
         for dia in itinerary_data['dias']:
             for punto in dia['puntos']:
                 ItineraryPoint.objects.create(
@@ -112,7 +134,7 @@ def generate_itinerary(request):
                     notes=punto['notas']
                 )
         
-        # 7. Devolver respuesta estructurada
+        # 9. Devolver respuesta estructurada
         return Response({
             'display': gpt_response['display'],
             'itinerary_id': itinerary.id,
