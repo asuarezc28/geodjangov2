@@ -85,8 +85,8 @@ def generate_itinerary(request):
             "data": {{
                 "titulo": "Título del itinerario (OBLIGATORIO)",
                 "description": "Descripción general del itinerario (OBLIGATORIO)",
-                "start_date": "Fecha de inicio en formato YYYY-MM-DD (OBLIGATORIO)",
-                "end_date": "Fecha de fin en formato YYYY-MM-DD (OBLIGATORIO)",
+                "start_date": "2024-03-15",  // Fecha de inicio en formato YYYY-MM-DD (OBLIGATORIO, debe ser una fecha real)
+                "end_date": "2024-03-16",    // Fecha de fin en formato YYYY-MM-DD (OBLIGATORIO, debe ser una fecha real)
                 "dias": [
                     {{
                         "numero": 1,  // Número del día (OBLIGATORIO)
@@ -112,6 +112,9 @@ def generate_itinerary(request):
         6. El display debe ser detallado, informativo y atractivo visualmente
         7. Usa emojis relevantes para cada sección y punto de interés
         8. Incluye horarios recomendados y consejos prácticos
+        9. Las fechas DEBEN ser reales y válidas en formato YYYY-MM-DD
+        10. Usa fechas futuras (2024 o 2025) para los itinerarios
+        11. La diferencia entre start_date y end_date debe coincidir con el número de días del itinerario
         """
         
         # 5. Llamar a GPT
