@@ -115,43 +115,23 @@ def generate_itinerary(request):
             messages=[
                 {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma. Debes responder SOLO con un JSON válido, sin texto adicional."},
                 {"role": "user", "content": prompt}
-            ],
-            stream=True
+            ]
         )
         
-        def generate():
-            full_response = ""
-            for chunk in response:
-                if chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
-                    full_response += content
-            # Log para depuración
-            print("FULL RESPONSE:", repr(full_response))
-            try:
-                # Limpiar cualquier bloque markdown al principio y al final
-                cleaned = full_response.strip()
-                cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
-                cleaned = re.sub(r"\s*```$", "", cleaned)
-                cleaned = cleaned.strip()
-                gpt_response = json.loads(cleaned)
-                display = gpt_response.get('display', '')
-                for line in display.splitlines():
-                    if line.strip():
-                        yield f"data: {line}\n\n"
-                yield f"data: __JSON__:{json.dumps(gpt_response)}\n\n"
-            except Exception as e:
-                yield f"data: Error al procesar la respuesta: {str(e)}\n\n"
-        
-        return StreamingHttpResponse(
-            generate(),
-            content_type='text/event-stream',
-            headers={
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
-                'X-Accel-Buffering': 'no'
-            }
-        )
-        
+        # Procesar la respuesta de GPT
+        content = response.choices[0].message.content.strip()
+        # Limpiar cualquier bloque markdown al principio y al final
+        cleaned = content.strip()
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+        cleaned = cleaned.strip()
+        gpt_response = json.loads(cleaned)
+        display = gpt_response.get('display', '')
+        data = gpt_response.get('data', {})
+        return Response({
+            'display': display,
+            'data': data
+        })
     except Exception as e:
         return Response(
             {"error": str(e)},
