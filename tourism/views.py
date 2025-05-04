@@ -127,7 +127,9 @@ def generate_itinerary(request):
             # Log para depuración
             print("FULL RESPONSE:", repr(full_response))
             try:
-                gpt_response = json.loads(full_response)
+                # Limpiar bloque markdown si existe
+                cleaned = re.sub(r"^```json\\s*|```$", "", full_response.strip(), flags=re.MULTILINE)
+                gpt_response = json.loads(cleaned)
                 display = gpt_response.get('display', '')
                 for line in display.splitlines():
                     if line.strip():
