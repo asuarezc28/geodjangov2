@@ -47,7 +47,6 @@ def generate_itinerary(request):
             }
         })
     
-    # 1. Recibir la consulta del usuario y los POIs disponibles
     user_query = request.data.get('query')
     available_pois = request.data.get('available_pois')
     
@@ -64,13 +63,11 @@ def generate_itinerary(request):
         )
     
     try:
-        # 2. Construir el contexto para GPT usando los POIs recibidos
         context = "\n".join([
             f"- {poi['name']} (ID: {poi['id']}): {poi['description']} - Tipo: {poi['type']}, Dificultad: {poi['difficulty']}"
             for poi in available_pois
         ])
         
-        # 3. Preparar el prompt para GPT
         prompt = f"""
         Como experto en turismo de La Palma, genera un itinerario basado en esta solicitud: {user_query}
         
@@ -111,7 +108,6 @@ def generate_itinerary(request):
         }}
         """
         
-        # 4. Llamar a GPT con streaming
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
             model="gpt-4-1106-preview",
@@ -119,7 +115,7 @@ def generate_itinerary(request):
                 {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma. Debes responder SOLO con un JSON válido, sin texto adicional."},
                 {"role": "user", "content": prompt}
             ],
-            stream=True  # Habilitar streaming
+            stream=True
         )
         
         def generate():
@@ -128,52 +124,19 @@ def generate_itinerary(request):
                 if chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
                     full_response += content
-                    yield f"data: {content}\n\n"
             
-            # Procesar la respuesta completa
+            # Al terminar el stream, parsear el JSON y hacer streaming solo del display
             try:
                 gpt_response = json.loads(full_response)
-                
-                # Validar que la respuesta tenga la estructura esperada
-                if not isinstance(gpt_response, dict):
-                    yield f"data: Error: La respuesta no es un objeto JSON válido\n\n"
-                    return
-                
-                if not all(key in gpt_response for key in ['display', 'data']):
-                    yield f"data: Error: La respuesta no tiene la estructura esperada\n\n"
-                    return
-                
-                if not all(key in gpt_response['data'] for key in ['titulo', 'description', 'start_date', 'end_date', 'dias']):
-                    yield f"data: Error: La respuesta no tiene todos los campos requeridos\n\n"
-                    return
-                
-                # Crear itinerario en DB
-                itinerary_data = gpt_response['data']
-                itinerary = Itinerary.objects.create(
-                    title=itinerary_data['titulo'],
-                    description=itinerary_data.get('description', ''),
-                    start_date=itinerary_data.get('start_date'),
-                    end_date=itinerary_data.get('end_date')
-                )
-                
-                # Crear puntos del itinerario
-                for dia in itinerary_data['dias']:
-                    for punto in dia['puntos']:
-                        ItineraryPoint.objects.create(
-                            itinerary=itinerary,
-                            point_of_interest_id=punto['poi_id'],
-                            day=dia['numero'],
-                            order=punto['orden'],
-                            notes=punto['notas']
-                        )
-                
-                # Enviar ID del itinerario creado
-                yield f"data: ITINERARY_ID:{itinerary.id}\n\n"
-                
-            except json.JSONDecodeError as e:
-                yield f"data: Error al procesar la respuesta: {str(e)}\n\n"
+                display = gpt_response.get('display', '')
+                # Stream del display, troceado por líneas para mejor experiencia
+                for line in display.splitlines():
+                    if line.strip():
+                        yield f"data: {line}\n\n"
+                # Al final, enviar el JSON completo en un mensaje especial
+                yield f"data: __JSON__:{json.dumps(gpt_response)}\n\n"
             except Exception as e:
-                yield f"data: Error: {str(e)}\n\n"
+                yield f"data: Error al procesar la respuesta: {str(e)}\n\n"
         
         return StreamingHttpResponse(
             generate(),
