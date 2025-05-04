@@ -14,12 +14,13 @@ from .serializers import (
 )
 from django.utils import timezone
 from django.db.models import Avg, Max
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 import os
 from django.conf import settings
 from openai import OpenAI
 import json
 import re
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 
@@ -27,6 +28,7 @@ def health_check(request):
     return JsonResponse({"status": "ok"})
 
 @api_view(['GET', 'POST'])
+@csrf_exempt
 def generate_itinerary(request):
     if request.method == 'GET':
         return Response({
@@ -38,8 +40,8 @@ def generate_itinerary(request):
                         "id": 1,
                         "name": "Roque de los Muchachos",
                         "description": "Punto más alto de la isla...",
-                        "type": "naturaleza",
-                        "difficulty": "media"
+                        "type": "VIEWPOINT",
+                        "difficulty": "EASY"
                     }
                 ]
             }
@@ -107,97 +109,81 @@ def generate_itinerary(request):
                 ]
             }}
         }}
-        
-        REGLAS ESTRICTAS:
-        1. Responde SOLO con el JSON, sin ningún texto adicional
-        2. No incluyas ```json``` ni ningún otro marcador
-        3. No incluyas explicaciones ni comentarios
-        4. Usa SOLO los puntos de interés listados arriba
-        5. Los poi_id deben ser IDs válidos de la lista proporcionada
-        6. El display debe ser detallado, informativo y atractivo visualmente
-        7. Usa emojis relevantes para cada sección y punto de interés
-        8. Incluye horarios recomendados y consejos prácticos
-        9. Las fechas DEBEN ser reales y válidas en formato YYYY-MM-DD
-        10. Usa fechas futuras (2024 o 2025) para los itinerarios
-        11. La diferencia entre start_date y end_date debe coincidir con el número de días del itinerario
         """
         
-        # 4. Llamar a GPT
+        # 4. Llamar a GPT con streaming
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
-            model="gpt-4-1106-preview",  # Modelo más reciente que maneja mejor JSON
+            model="gpt-4-1106-preview",
             messages=[
                 {"role": "system", "content": "Eres un asistente especializado en crear itinerarios turísticos para La Palma. Debes responder SOLO con un JSON válido, sin texto adicional."},
                 {"role": "user", "content": prompt}
             ],
-            response_format={ "type": "json_object" }  # Forzar formato JSON
+            stream=True  # Habilitar streaming
         )
         
-        # 5. Procesar respuesta de GPT
-        try:
-            # Obtener la respuesta de GPT
-            content = response.choices[0].message.content.strip()
-            print("Respuesta de GPT:", content)  # Log de la respuesta completa
+        def generate():
+            full_response = ""
+            for chunk in response:
+                if chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    full_response += content
+                    yield f"data: {content}\n\n"
             
-            # Intentar parsear directamente el JSON
+            # Procesar la respuesta completa
             try:
-                gpt_response = json.loads(content)
-            except json.JSONDecodeError as e:
-                print("Error al parsear JSON:", str(e))  # Log del error de parseo
-                # Si falla, intentar limpiar el string
-                content = content.replace('\n', '').replace('\r', '').replace('\t', '')
-                # Buscar el primer { y el último }
-                start = content.find('{')
-                end = content.rfind('}') + 1
-                if start == -1 or end == 0:
-                    raise ValueError("No se encontró un JSON válido en la respuesta")
-                json_str = content[start:end]
-                print("JSON extraído:", json_str)  # Log del JSON extraído
-                gpt_response = json.loads(json_str)
-            
-            # Validar que la respuesta tenga la estructura esperada
-            if not isinstance(gpt_response, dict):
-                raise ValueError("La respuesta no es un objeto JSON válido")
-            
-            if not all(key in gpt_response for key in ['display', 'data']):
-                raise ValueError("La respuesta no tiene la estructura esperada")
-            
-            if not all(key in gpt_response['data'] for key in ['titulo', 'description', 'start_date', 'end_date', 'dias']):
-                raise ValueError("La respuesta no tiene todos los campos requeridos")
-            
-        except Exception as e:
-            print("Error completo:", str(e))  # Log del error completo
-            return Response(
-                {"error": f"Error procesando la respuesta de GPT: {str(e)}\nContenido recibido: {content}"},
-                status=500
-            )
-        
-        # 6. Crear itinerario en DB
-        itinerary_data = gpt_response['data']
-        itinerary = Itinerary.objects.create(
-            title=itinerary_data['titulo'],
-            description=itinerary_data.get('description', ''),
-            start_date=itinerary_data.get('start_date'),
-            end_date=itinerary_data.get('end_date')
-        )
-        
-        # 7. Crear puntos del itinerario
-        for dia in itinerary_data['dias']:
-            for punto in dia['puntos']:
-                ItineraryPoint.objects.create(
-                    itinerary=itinerary,
-                    point_of_interest_id=punto['poi_id'],
-                    day=dia['numero'],
-                    order=punto['orden'],
-                    notes=punto['notas']
+                gpt_response = json.loads(full_response)
+                
+                # Validar que la respuesta tenga la estructura esperada
+                if not isinstance(gpt_response, dict):
+                    yield f"data: Error: La respuesta no es un objeto JSON válido\n\n"
+                    return
+                
+                if not all(key in gpt_response for key in ['display', 'data']):
+                    yield f"data: Error: La respuesta no tiene la estructura esperada\n\n"
+                    return
+                
+                if not all(key in gpt_response['data'] for key in ['titulo', 'description', 'start_date', 'end_date', 'dias']):
+                    yield f"data: Error: La respuesta no tiene todos los campos requeridos\n\n"
+                    return
+                
+                # Crear itinerario en DB
+                itinerary_data = gpt_response['data']
+                itinerary = Itinerary.objects.create(
+                    title=itinerary_data['titulo'],
+                    description=itinerary_data.get('description', ''),
+                    start_date=itinerary_data.get('start_date'),
+                    end_date=itinerary_data.get('end_date')
                 )
+                
+                # Crear puntos del itinerario
+                for dia in itinerary_data['dias']:
+                    for punto in dia['puntos']:
+                        ItineraryPoint.objects.create(
+                            itinerary=itinerary,
+                            point_of_interest_id=punto['poi_id'],
+                            day=dia['numero'],
+                            order=punto['orden'],
+                            notes=punto['notas']
+                        )
+                
+                # Enviar ID del itinerario creado
+                yield f"data: ITINERARY_ID:{itinerary.id}\n\n"
+                
+            except json.JSONDecodeError as e:
+                yield f"data: Error al procesar la respuesta: {str(e)}\n\n"
+            except Exception as e:
+                yield f"data: Error: {str(e)}\n\n"
         
-        # 8. Devolver respuesta estructurada
-        return Response({
-            'display': gpt_response['display'],
-            'itinerary_id': itinerary.id,
-            'points': itinerary.get_points_geojson()
-        })
+        return StreamingHttpResponse(
+            generate(),
+            content_type='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'X-Accel-Buffering': 'no'
+            }
+        )
         
     except Exception as e:
         return Response(
