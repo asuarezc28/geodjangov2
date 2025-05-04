@@ -124,16 +124,14 @@ def generate_itinerary(request):
                 if chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
                     full_response += content
-            
-            # Al terminar el stream, parsear el JSON y hacer streaming solo del display
+            # Log para depuración
+            print("FULL RESPONSE:", repr(full_response))
             try:
                 gpt_response = json.loads(full_response)
                 display = gpt_response.get('display', '')
-                # Stream del display, troceado por líneas para mejor experiencia
                 for line in display.splitlines():
                     if line.strip():
                         yield f"data: {line}\n\n"
-                # Al final, enviar el JSON completo en un mensaje especial
                 yield f"data: __JSON__:{json.dumps(gpt_response)}\n\n"
             except Exception as e:
                 yield f"data: Error al procesar la respuesta: {str(e)}\n\n"
