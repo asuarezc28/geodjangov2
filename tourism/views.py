@@ -30,41 +30,45 @@ def health_check(request):
 def generate_itinerary(request):
     if request.method == 'GET':
         return Response({
-            "message": "Este endpoint espera una petición POST con un JSON que contenga el campo 'query'",
+            "message": "Este endpoint espera una petición POST con un JSON que contenga los campos 'query' y 'available_pois'",
             "example": {
-                "query": "Quiero un itinerario de 2 días en La Palma visitando el Roque de los Muchachos"
+                "query": "Quiero un itinerario de 2 días en La Palma visitando el Roque de los Muchachos",
+                "available_pois": [
+                    {
+                        "id": 1,
+                        "name": "Roque de los Muchachos",
+                        "description": "Punto más alto de la isla...",
+                        "type": "naturaleza",
+                        "difficulty": "media"
+                    }
+                ]
             }
         })
     
-    # 1. Recibir la consulta del usuario
+    # 1. Recibir la consulta del usuario y los POIs disponibles
     user_query = request.data.get('query')
+    available_pois = request.data.get('available_pois')
+    
     if not user_query:
         return Response(
             {"error": "El campo 'query' es requerido"},
             status=400
         )
     
+    if not available_pois:
+        return Response(
+            {"error": "El campo 'available_pois' es requerido"},
+            status=400
+        )
+    
     try:
-        # 2. Obtener todos los puntos de interés
-        points_of_interest = PointOfInterest.objects.all()
-        pois_data = []
-        
-        for poi in points_of_interest:
-            pois_data.append({
-                'id': poi.id,
-                'name': poi.name,
-                'description': poi.description,
-                'type': poi.type,
-                'difficulty': poi.difficulty
-            })
-        
-        # 3. Construir el contexto para GPT
+        # 2. Construir el contexto para GPT usando los POIs recibidos
         context = "\n".join([
             f"- {poi['name']} (ID: {poi['id']}): {poi['description']} - Tipo: {poi['type']}, Dificultad: {poi['difficulty']}"
-            for poi in pois_data
+            for poi in available_pois
         ])
         
-        # 4. Preparar el prompt para GPT
+        # 3. Preparar el prompt para GPT
         prompt = f"""
         Como experto en turismo de La Palma, genera un itinerario basado en esta solicitud: {user_query}
         
@@ -118,7 +122,7 @@ def generate_itinerary(request):
         11. La diferencia entre start_date y end_date debe coincidir con el número de días del itinerario
         """
         
-        # 5. Llamar a GPT
+        # 4. Llamar a GPT
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
             model="gpt-4-1106-preview",  # Modelo más reciente que maneja mejor JSON
@@ -129,7 +133,7 @@ def generate_itinerary(request):
             response_format={ "type": "json_object" }  # Forzar formato JSON
         )
         
-        # 6. Procesar respuesta de GPT
+        # 5. Procesar respuesta de GPT
         try:
             # Obtener la respuesta de GPT
             content = response.choices[0].message.content.strip()
@@ -168,7 +172,7 @@ def generate_itinerary(request):
                 status=500
             )
         
-        # 7. Crear itinerario en DB
+        # 6. Crear itinerario en DB
         itinerary_data = gpt_response['data']
         itinerary = Itinerary.objects.create(
             title=itinerary_data['titulo'],
@@ -177,7 +181,7 @@ def generate_itinerary(request):
             end_date=itinerary_data.get('end_date')
         )
         
-        # 8. Crear puntos del itinerario
+        # 7. Crear puntos del itinerario
         for dia in itinerary_data['dias']:
             for punto in dia['puntos']:
                 ItineraryPoint.objects.create(
@@ -188,7 +192,7 @@ def generate_itinerary(request):
                     notes=punto['notas']
                 )
         
-        # 9. Devolver respuesta estructurada
+        # 8. Devolver respuesta estructurada
         return Response({
             'display': gpt_response['display'],
             'itinerary_id': itinerary.id,
