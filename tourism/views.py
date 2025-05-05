@@ -88,21 +88,32 @@ def generate_itinerary(request):
             - Una conclusión con recomendaciones finales
             Usa emojis estratégicamente para hacer el texto más atractivo y fácil de leer.",
             "data": {{
-                "titulo": "Título del itinerario (OBLIGATORIO)",
+                "title": "Título del itinerario (OBLIGATORIO)",
                 "description": "Descripción general del itinerario (OBLIGATORIO)",
                 "start_date": "2024-03-15",  // Fecha de inicio en formato YYYY-MM-DD (OBLIGATORIO)
                 "end_date": "2024-03-16",    // Fecha de fin en formato YYYY-MM-DD (OBLIGATORIO)
-                "dias": [
+                "user": null,
+                "points": [
                     {{
-                        "numero": 1,  // Número del día (OBLIGATORIO)
-                        "titulo": "Título del día (OBLIGATORIO)",
-                        "puntos": [
-                            {{
-                                "poi_id": 1,  // ID del punto de interés (OBLIGATORIO)
-                                "orden": 1,    // Orden del punto en el día (OBLIGATORIO)
-                                "notas": "Notas específicas para este punto (OBLIGATORIO)"
-                            }}
-                        ]
+                        "day": 1,  // Número del día (OBLIGATORIO)
+                        "order": 1,  // Orden del punto en el día (OBLIGATORIO)
+                        "notes": "Notas específicas para este punto (OBLIGATORIO)",
+                        "point_details": {{
+                            "id": 1,  // ID del punto de interés (OBLIGATORIO)
+                            "name": "Nombre del punto (OBLIGATORIO)",
+                            "description": "Descripción del punto (OBLIGATORIO)",
+                            "location": {{
+                                "type": "Point",
+                                "coordinates": [longitud, latitud]  // Coordenadas del punto (OBLIGATORIO)
+                            }},
+                            "address": "Dirección del punto (OBLIGATORIO)",
+                            "type": "TIPO",  // Tipo del punto (OBLIGATORIO)
+                            "difficulty": "DIFICULTAD",  // Dificultad del punto (OBLIGATORIO)
+                            "estimated_time": "HH:MM:SS"  // Tiempo estimado (OBLIGATORIO)
+                        }},
+                        "point_of_interest": 1,  // ID del punto de interés (OBLIGATORIO)
+                        "restaurant": null,
+                        "event": null
                     }}
                 ]
             }}
