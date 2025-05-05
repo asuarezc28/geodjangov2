@@ -131,19 +131,43 @@ def generate_itinerary(request):
         
         # Procesar la respuesta de GPT
         content = response.choices[0].message.content.strip()
+        print("\n=== RESPUESTA CRUDA DE GPT ===")
+        print(content)
+        print("=============================\n")
+        
         # Limpiar cualquier bloque markdown al principio y al final
         cleaned = content.strip()
         cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\s*```$", "", cleaned)
         cleaned = cleaned.strip()
-        gpt_response = json.loads(cleaned)
-        display = gpt_response.get('display', '')
-        data = gpt_response.get('data', {})
-        return Response({
-            'display': display,
-            'data': data
-        })
+        
+        print("\n=== CONTENIDO LIMPIO ===")
+        print(cleaned)
+        print("========================\n")
+        
+        try:
+            gpt_response = json.loads(cleaned)
+            print("\n=== JSON PARSEADO ===")
+            print(json.dumps(gpt_response, indent=2))
+            print("====================\n")
+            
+            display = gpt_response.get('display', '')
+            data = gpt_response.get('data', {})
+            return Response({
+                'display': display,
+                'data': data
+            })
+        except json.JSONDecodeError as e:
+            print(f"\n=== ERROR DE PARSEO JSON ===")
+            print(f"Error: {str(e)}")
+            print(f"Posición del error: {e.pos}")
+            print(f"Línea: {e.lineno}, Columna: {e.colno}")
+            print("===========================\n")
+            raise
     except Exception as e:
+        print(f"\n=== ERROR GENERAL ===")
+        print(f"Error: {str(e)}")
+        print("===================\n")
         return Response(
             {"error": str(e)},
             status=500
