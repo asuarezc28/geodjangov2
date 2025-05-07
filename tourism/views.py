@@ -79,18 +79,40 @@ def generate_itinerary(request):
         {{
             "display": "Texto formateado para mostrar al usuario. Debe incluir:\n- Un título atractivo con emojis relevantes\n- Una breve introducción sobre el itinerario\n- Para cada día:\n  * Un subtítulo con el número de día y emojis\n  * Una descripción de las actividades del día\n  * Los puntos de interés a visitar con sus horarios recomendados\n  * Consejos prácticos (qué llevar, mejor hora para visitar, etc.)\n- Una conclusión con recomendaciones finales\nUsa emojis estratégicamente para hacer el texto más atractivo y fácil de leer.",
             "data": {{
-                "title": "Título del itinerario (OBLIGATORIO)",
-                "description": "Descripción general del itinerario (OBLIGATORIO)",
-                "start_date": "2024-03-15",  // Fecha de inicio en formato YYYY-MM-DD (OBLIGATORIO)
-                "end_date": "2024-03-16",    // Fecha de fin en formato YYYY-MM-DD (OBLIGATORIO)
+                "id": 1,
+                "title": "Título del itinerario",
+                "description": "Descripción general del itinerario",
+                "start_date": "2024-03-15T00:00:00.000Z",
+                "end_date": "2024-03-16T00:00:00.000Z",
+                "user": null,
                 "points": [
                     {{
-                        "day": 1,  // Día del itinerario
-                        "order": 1,  // Orden del punto en el día
-                        "notes": "Notas para este punto (OBLIGATORIO)",
-                        "point_of_interest": 1  // ID del punto de interés (OBLIGATORIO)
+                        "id": 1,
+                        "day": 1,
+                        "order": 1,
+                        "notes": "Notas para este punto",
+                        "point_details": {{
+                            "id": 1,
+                            "name": "Nombre del punto",
+                            "description": "Descripción del punto",
+                            "location": {{
+                                "type": "Point",
+                                "coordinates": [longitud, latitud]
+                            }},
+                            "address": "Dirección del punto",
+                            "type": "TIPO",
+                            "difficulty": "DIFICULTAD",
+                            "estimated_time": "HH:MM:SS",
+                            "created_at": "2024-03-15T00:00:00.000Z",
+                            "updated_at": "2024-03-15T00:00:00.000Z"
+                        }},
+                        "point_of_interest": 1,
+                        "restaurant": null,
+                        "event": null
                     }}
-                ]
+                ],
+                "created_at": "2024-03-15T00:00:00.000Z",
+                "updated_at": "2024-03-15T00:00:00.000Z"
             }}
         }}
         """
