@@ -77,42 +77,38 @@ def generate_itinerary(request):
         
         IMPORTANTE: Responde SOLO con este JSON, sin ningún texto adicional:
         {{
-            "display": "Texto formateado para mostrar al usuario. Debe incluir:\n- Un título atractivo con emojis relevantes\n- Una breve introducción sobre el itinerario\n- Para cada día:\n  * Un subtítulo con el número de día y emojis\n  * Una descripción de las actividades del día\n  * Los puntos de interés a visitar con sus horarios recomendados\n  * Consejos prácticos (qué llevar, mejor hora para visitar, etc.)\n- Una conclusión con recomendaciones finales\nUsa emojis estratégicamente para hacer el texto más atractivo y fácil de leer.",
+            "display": "Tu itinerario ya está disponible en el mapa",
             "data": {{
-                "id": 1,
-                "title": "Título del itinerario",
-                "description": "Descripción general del itinerario",
-                "start_date": "2024-03-15T00:00:00.000Z",
-                "end_date": "2024-03-16T00:00:00.000Z",
-                "user": null,
+                "title": "Título atractivo para el itinerario",
+                "description": "Descripción breve y atractiva del itinerario, máximo 50 palabras.",
                 "points": [
                     {{
                         "id": 1,
                         "day": 1,
                         "order": 1,
-                        "notes": "Notas para este punto",
+                        "notes": "Consejo breve, máximo 10 palabras",
                         "point_details": {{
-                            "id": 1,
-                            "name": "Nombre del punto",
-                            "description": "Descripción del punto",
-                            "location": {{
-                                "type": "Point",
-                                "coordinates": [longitud, latitud]
-                            }},
-                            "address": "Dirección del punto",
-                            "type": "TIPO",
-                            "difficulty": "DIFICULTAD",
-                            "estimated_time": "HH:MM:SS",
-                            "created_at": "2024-03-15T00:00:00.000Z",
-                            "updated_at": "2024-03-15T00:00:00.000Z"
-                        }},
-                        "point_of_interest": 1,
-                        "restaurant": null,
-                        "event": null
+                            "name": "Nombre del lugar",
+                            "description": "Descripción breve, máximo 30 palabras",
+                            "type": "PARK",
+                            "estimated_time": "HH:MM",
+                            "coordinates": [longitud, latitud]
+                        }}
+                    }},
+                    {{
+                        "id": 2,
+                        "day": 2,
+                        "order": 1,
+                        "notes": "Consejo breve, máximo 10 palabras",
+                        "point_details": {{
+                            "name": "Nombre del lugar",
+                            "description": "Descripción breve, máximo 30 palabras",
+                            "type": "VIEWPOINT",
+                            "estimated_time": "HH:MM",
+                            "coordinates": [longitud, latitud]
+                        }}
                     }}
-                ],
-                "created_at": "2024-03-15T00:00:00.000Z",
-                "updated_at": "2024-03-15T00:00:00.000Z"
+                ]
             }}
         }}
         """
